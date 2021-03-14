@@ -25,7 +25,7 @@ class Tools {
   /**
    * A helper method to calculate Jacobians.
    */
-  Eigen::MatrixXd CalculateJacobian(const Eigen::VectorXd& x_state);
+  Eigen::MatrixXd CalculateRadarJacobian(const Eigen::VectorXd& x_state);
 
 };
 

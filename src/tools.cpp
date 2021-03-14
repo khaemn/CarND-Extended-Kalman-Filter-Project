@@ -39,7 +39,7 @@ VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations,
   return rmse;
 }
 
-MatrixXd Tools::CalculateJacobian(const VectorXd &x_state)
+MatrixXd Tools::CalculateRadarJacobian(const VectorXd &x_state)
 {
   MatrixXd Hj(3, 4);
 
