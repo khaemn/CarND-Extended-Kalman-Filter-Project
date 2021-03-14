@@ -9,6 +9,12 @@ using std::cout;
 using std::endl;
 using std::vector;
 
+
+const std::map<MeasurementPackage::SensorType, long> MeasurementPackage::SIZES {
+    {MeasurementPackage::LASER, 2},
+    {MeasurementPackage::RADAR, 3}
+};
+
 /**
  * Constructor.
  */
@@ -61,6 +67,13 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     ekf_.x_ = VectorXd(4);
     ekf_.x_ << 1, 1, 1, 1;
 
+    const auto data_size = measurement_pack.raw_measurements_.size();
+    if (data_size != MeasurementPackage::SIZES.at(measurement_pack.sensor_type_)) {
+      cout << "Invalid measurement package (type " << measurement_pack.sensor_type_
+           << "): data size wrong " << data_size << endl;
+      return;
+    }
+cout << "LOG data_size" << endl;
     if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
       // TODO: Convert radar from polar to cartesian coordinates 
       //         and initialize state.
@@ -68,7 +81,9 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     }
     else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
       // TODO: Initialize state.
-
+cout << "LOG measurement_pack.raw_measurements_; " << endl;
+      ekf_.x_(0) = measurement_pack.raw_measurements_(0);
+      ekf_.x_(1) = measurement_pack.raw_measurements_(1);
     }
 
     // done initializing, no need to predict or update
@@ -86,7 +101,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
    * TODO: Update the process noise covariance matrix.
    * Use noise_ax = 9 and noise_ay = 9 for your Q matrix.
    */
-
+cout << "LOG Predict" << endl;
   ekf_.Predict();
 
   /**
@@ -98,7 +113,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
    * - Use the sensor type to perform the update step.
    * - Update the state and covariance matrices.
    */
-
+cout << "LOG updates" << endl;
   if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
     // TODO: Radar updates
 
@@ -106,8 +121,8 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
     // TODO: Laser updates
 
   }
-
+cout << "LOG output" << endl;
   // print the output
-  cout << "x_ = " << ekf_.x_ << endl;
-  cout << "P_ = " << ekf_.P_ << endl;
+//  cout << "x_ = " << ekf_.x_ << endl;
+//  cout << "P_ = " << ekf_.P_ << endl;
 }
