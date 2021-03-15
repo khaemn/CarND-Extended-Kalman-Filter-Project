@@ -27,6 +27,8 @@ class Tools {
    */
   Eigen::MatrixXd CalculateRadarJacobian(const Eigen::VectorXd& x_state);
 
+  Eigen::VectorXd ToPolar(const Eigen::VectorXd& carthesian);
+
 };
 
 #endif  // TOOLS_H_

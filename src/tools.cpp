@@ -57,14 +57,14 @@ MatrixXd Tools::CalculateRadarJacobian(const VectorXd &x_state)
   }
 
   const double squared_sum   = px * px + py * py;
-  const double kappa         = 1. / sqrt(squared_sum);
+  const double inv_rho         = 1. / sqrt(squared_sum);
   const double recipr_sq_sum = 1. / squared_sum;
   const double beta          = pow(squared_sum, 3. / 2.);
-  const double kappa_px      = kappa * px;
-  const double kappa_py      = kappa * py;
+  const double inv_rho_px      = inv_rho * px;
+  const double inv_rho_py      = inv_rho * py;
 
-  Hj(0, 0) = kappa_px;
-  Hj(0, 1) = kappa_py;
+  Hj(0, 0) = inv_rho_px;
+  Hj(0, 1) = inv_rho_py;
   Hj(0, 2) = 0.;
   Hj(0, 3) = 0.;
 
@@ -75,8 +75,40 @@ MatrixXd Tools::CalculateRadarJacobian(const VectorXd &x_state)
 
   Hj(2, 0) = (vx * py - vy * px) * py / beta;
   Hj(2, 1) = (vy * px - vx * py) * px / beta;
-  Hj(2, 2) = kappa_px;
-  Hj(2, 3) = kappa_py;
+  Hj(2, 2) = inv_rho_px;
+  Hj(2, 3) = inv_rho_py;
 
   return Hj;
+}
+
+Eigen::VectorXd Tools::ToPolar(const Eigen::VectorXd &carthesian)
+{
+  VectorXd polar(3);
+  polar << 0, 0, 0;
+  if (carthesian.size() != 4)
+  {
+    cout << "Error: Carthesian position and velocities vector must be of size 4 while is "
+         << carthesian.size() << endl;
+    return polar;
+  }
+
+  // recover state parameters
+  const double px = carthesian(0);
+  const double py = carthesian(1);
+  const double vx = carthesian(2);
+  const double vy = carthesian(3);
+
+  const double rho = sqrt(px * px + py * py);
+  double       phi = atan(py / (px + 0.0001));
+  while (phi > M_PI)
+  {
+    phi -= 2 * M_PI;
+  }
+  while (phi < -M_PI)
+  {
+    phi += 2 * M_PI;
+  }
+  const double rho_dot = (px * vx - py * vy) / rho;
+  polar << rho, phi, rho_dot;
+  return polar;
 }
