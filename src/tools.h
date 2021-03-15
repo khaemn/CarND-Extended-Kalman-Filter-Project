@@ -15,7 +15,7 @@ class Tools {
 
 
   static Eigen::VectorXd ToPolar(const Eigen::VectorXd& carthesian);
-  static Eigen::VectorXd ToCarthesianXY(const Eigen::VectorXd& polar);
+  static Eigen::VectorXd ToCarthesian(const Eigen::VectorXd& polar);
 
 };
 

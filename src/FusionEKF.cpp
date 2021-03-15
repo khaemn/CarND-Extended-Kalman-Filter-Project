@@ -97,14 +97,9 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack)
 
     if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR)
     {
-      VectorXd carthesian = Tools::ToCarthesianXY(measurement_pack.raw_measurements_);
-      VectorXd x(4);
-      x(0) = carthesian(0);
-      x(1) = carthesian(1);
-      x(2) = 0.0;
-      x(3) = 0.0;
+      VectorXd carthesian = Tools::ToCarthesian(measurement_pack.raw_measurements_);
 
-      ekf_.Init(x, P_initial, F_initial, H_laser_, R_laser_, Q_initial);
+      ekf_.Init(carthesian, P_initial, F_initial, H_laser_, R_laser_, Q_initial);
     }
     else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER)
     {

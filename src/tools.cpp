@@ -22,7 +22,7 @@ VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations,
 
   VectorXd residuals(4);
   residuals << 0, 0, 0, 0;
-  for (int i = 0; i < estimations.size(); ++i)
+  for (size_t i = 0; i < estimations.size(); ++i)
   {
     VectorXd diff;
     diff                  = estimations[i] - ground_truth[i];
@@ -115,25 +115,25 @@ Eigen::VectorXd Tools::ToPolar(const Eigen::VectorXd &carthesian)
 
   const double rho     = sqrt(px * px + py * py);
   double       phi     = atan2(py, px);
-  const double rho_dot = (px * vx + py * vy) / rho;
+  const double rho_dot = (px * vx + py * vy) / (rho + 0.001);
 
   polar << rho, phi, rho_dot;
   return polar;
 }
 
-Eigen::VectorXd Tools::ToCarthesianXY(const Eigen::VectorXd &polar)
+Eigen::VectorXd Tools::ToCarthesian(const Eigen::VectorXd &polar)
 {
   // As the rho_dot does not provide enought information about
   // true values of vx and vy, it is only possible to convert
-  // the x and y coordinates, btu not velocities.
+  // the x and y coordinates, but not velocities.
 
   const double rho = polar(0);
   const double phi = polar(1);
   const double x   = rho * cos(phi);
   const double y   = rho * sin(phi);
 
-  VectorXd carthesianXY(2);
-  carthesianXY << x, y;
+  VectorXd carthesian(4);
+  carthesian << x, y, 0, 0;
 
-  return carthesianXY;
+  return carthesian;
 }
