@@ -64,15 +64,18 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack)
 
     // Initial uncertainty of the position, it does not
     // depend on which sensor type is used.
+    // An arbitrarily high value (AHV) is used to initialize
+    // these unsertainties.
+    static constexpr auto AHV = 1000;
     MatrixXd P_initial(4, 4);
     // clang-format off
-    P_initial << 100, 0, 0, 0,
-                 0, 100, 0, 0,
-                 0, 0, 100, 0,
-                 0, 0, 0, 100;
+    P_initial << AHV, 0, 0, 0,
+                 0, AHV, 0, 0,
+                 0, 0, AHV, 0,
+                 0, 0, 0, AHV;
     // clang-format on
 
-    auto Q_initial = Tools::BuildNoiseMatrix(noise_ax_, noise_ay_, 0.05);
+    MatrixXd Q_initial = Tools::BuildNoiseMatrix(noise_ax_, noise_ay_, 0.05);
 
     // the initial transition matrix F_
     // implements a constant linear (!) motion model
@@ -125,11 +128,16 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack)
   previous_timestamp_ = measurement_pack.timestamp_;
 
   static constexpr auto dt_tolerance = 0.0001;
+  // In F and Q matrices there are only the 'dt'-related elements changing
+  // over time, the rest always stay the same. So, if the dt
+  // (e.g. elapsed time between a previous measurement and the current
+  // one) has not changed, we can avoid re-computing of the Q matrix,
+  // and avoid assignment to the corresponding elements of F.
+  // Say, if there was measurement A, then B comes in 0.05 sec,
+  // and there comes C after again 0.05 sec, it is OK to use exactly
+  // equal F and Q matrices at both B and C iterations.
   if (abs(last_dt_ - dt) > dt_tolerance)
   {
-    // Performing costly matri operations only if the DT was
-    // changed, otherwise we still can re-use the former ones.
-    // Set proper time gap in the state transition matrix F
     ekf_.F_(0, 2) = dt;
     ekf_.F_(1, 3) = dt;
 
