@@ -141,11 +141,6 @@ int main()
     const double v1  = fusionEKF.ekf_.x_(2);
     const double v2  = fusionEKF.ekf_.x_(3);
 
-//    const double p_x = x_gt  * 1.05;
-//    const double p_y = y_gt  * 1.02;
-//    const double v1  = vx_gt * 0.98;
-//    const double v2  = vy_gt * 1.01;
-
     estimate(0) = p_x;
     estimate(1) = p_y;
     estimate(2) = v1 ;

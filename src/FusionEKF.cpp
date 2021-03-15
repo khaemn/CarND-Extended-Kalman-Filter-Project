@@ -47,8 +47,8 @@ FusionEKF::FusionEKF() {
 
   // H_radar is Hj, should be recomputed on each step.
 
-  noise_ax_ = 9.0;
-  noise_ay_ = 9.0;
+  noise_ax_ = 1.;//9.0;
+  noise_ay_ = 1.;//9.0;
 }
 
 /**
@@ -68,18 +68,26 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
      */
 
     // first measurement
-    cout << "EKF: " << endl;
     ekf_.x_ = VectorXd(4);
     ekf_.x_ << 1, 1, 1, 1;
 
     // Initial uncertainty of the position, it does not
     // depend on which sensor type is used.
     MatrixXd P_initial(4, 4);
-    P_initial << 1, 0, 0, 0,
-                 0, 1, 0, 0,
-                 0, 0, 1000, 0,
-                 0, 0, 0, 1000;
+    P_initial << 100, 0, 0, 0,
+                 0, 100, 0, 0,
+                 0, 0, 100, 0,
+                 0, 0, 0, 100;
 
+    auto Q_initial = build_Q(noise_ax_, noise_ay_, 0.05);
+
+    // the initial transition matrix F_
+    // implements a constant linear (!) motion model
+    MatrixXd F_initial(4, 4);
+    F_initial  << 1, 0, 1, 0,
+                  0, 1, 0, 1,
+                  0, 0, 1, 0,
+                  0, 0, 0, 1;
 
     const auto data_size = measurement_pack.raw_measurements_.size();
     if (data_size != MeasurementPackage::SIZES.at(measurement_pack.sensor_type_)) {
@@ -87,29 +95,24 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
            << "): data size wrong " << data_size << endl;
       return;
     }
-cout << "LOG data_size" << endl;
+
     if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
-      // TODO: Convert radar from polar to cartesian coordinates 
-      //         and initialize state.
+      VectorXd carthesian = Tools::ToCarthesianXY(measurement_pack.raw_measurements_);
+      VectorXd x(4);
+      x(0) = carthesian(0);
+      x(1) = carthesian(1);
+      x(2) = 0.0;
+      x(3) = 0.0;
+
+      ekf_.Init(x, P_initial, F_initial, H_laser_, R_laser_, Q_initial);
 
     }
     else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
-      // TODO: Initialize state.
       VectorXd x(4);
       x(0) = measurement_pack.raw_measurements_(0);
       x(1) = measurement_pack.raw_measurements_(1);
       x(2) = 0.0;
       x(3) = 0.0;
-cout << "LOG measurement_pack.raw_measurements_; " << endl;
-
-      auto Q_initial = build_Q(noise_ax_, noise_ay_, 0.0);
-
-      // the initial transition matrix F_
-      MatrixXd F_initial(4, 4);
-      F_initial  << 1, 0, 1, 0,
-                    0, 1, 0, 1,
-                    0, 0, 1, 0,
-                    0, 0, 0, 1;
 
       ekf_.Init(x, P_initial, F_initial, H_laser_, R_laser_, Q_initial);
     }
@@ -142,9 +145,6 @@ cout << "LOG measurement_pack.raw_measurements_; " << endl;
   // Set the process covariance matrix Q
   ekf_.Q_ = build_Q(noise_ax_, noise_ay_, dt);
 
-  Hj_ = tools.CalculateRadarJacobian(ekf_.x_);
-
-cout << "LOG Predict" << endl;
   ekf_.Predict();
 
   /**
@@ -156,22 +156,26 @@ cout << "LOG Predict" << endl;
    * - Use the sensor type to perform the update step.
    * - Update the state and covariance matrices.
    */
-cout << "LOG updates" << endl;
-  if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
-    // TODO: Radar updates
+  if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR)
+  {
+    // Radar updates
+    // cout << "radar\n" << measurement_pack.raw_measurements_ << endl;
+    Hj_     = tools.CalculateRadarJacobian(ekf_.x_);
     ekf_.H_ = Hj_;
     ekf_.R_ = R_radar_;
     ekf_.UpdateEKF(measurement_pack.raw_measurements_);
-  } else {
-    // TODO: Laser updates
+  }
+  else
+  {
+    // Laser updates
+    // cout << "laser\n" << measurement_pack.raw_measurements_ << endl;
     ekf_.H_ = H_laser_;
     ekf_.R_ = R_laser_;
     ekf_.Update(measurement_pack.raw_measurements_);
   }
-cout << "LOG output" << endl;
   // print the output
-  cout << "x_ = " << ekf_.x_ << endl;
-  cout << "P_ = " << ekf_.P_ << endl;
+//  cout << "x_ = " << ekf_.x_ << endl;
+//  cout << "P_ = " << ekf_.P_ << endl;
 }
 
 // Builds the Q matrix using X and Y acceleration noise

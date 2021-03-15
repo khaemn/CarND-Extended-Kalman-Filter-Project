@@ -56,20 +56,19 @@ MatrixXd Tools::CalculateRadarJacobian(const VectorXd &x_state)
     return Hj;
   }
 
-  const double squared_sum   = px * px + py * py;
-  const double inv_rho         = 1. / sqrt(squared_sum);
-  const double recipr_sq_sum = 1. / squared_sum;
-  const double beta          = pow(squared_sum, 3. / 2.);
-  const double inv_rho_px      = inv_rho * px;
-  const double inv_rho_py      = inv_rho * py;
+  const double squared_sum = px * px + py * py;
+  const double inv_rho     = 1. / sqrt(squared_sum);
+  const double beta        = pow(squared_sum, 3. / 2.);
+  const double inv_rho_px  = inv_rho * px;
+  const double inv_rho_py  = inv_rho * py;
 
   Hj(0, 0) = inv_rho_px;
   Hj(0, 1) = inv_rho_py;
   Hj(0, 2) = 0.;
   Hj(0, 3) = 0.;
 
-  Hj(1, 0) = -1. * py * recipr_sq_sum;
-  Hj(1, 1) = px * recipr_sq_sum;
+  Hj(1, 0) = -1. * py / squared_sum;
+  Hj(1, 1) = px / squared_sum;
   Hj(1, 2) = 0.;
   Hj(1, 3) = 0.;
 
@@ -99,7 +98,7 @@ Eigen::VectorXd Tools::ToPolar(const Eigen::VectorXd &carthesian)
   const double vy = carthesian(3);
 
   const double rho = sqrt(px * px + py * py);
-  double       phi = atan(py / (px + 0.0001));
+  double       phi = atan2(py, px);
   while (phi > M_PI)
   {
     phi -= 2 * M_PI;
@@ -108,7 +107,20 @@ Eigen::VectorXd Tools::ToPolar(const Eigen::VectorXd &carthesian)
   {
     phi += 2 * M_PI;
   }
-  const double rho_dot = (px * vx - py * vy) / rho;
+  const double rho_dot = (px * vx + py * vy) / rho;
   polar << rho, phi, rho_dot;
   return polar;
+}
+
+Eigen::VectorXd Tools::ToCarthesianXY(const Eigen::VectorXd &polar)
+{
+  const double rho = polar(0);
+  const double phi = polar(1);
+  const double x   = rho * cos(phi);
+  const double y   = rho * sin(phi);
+
+  VectorXd carthesianXY(2);
+  carthesianXY << x, y;
+
+  return carthesianXY;
 }
