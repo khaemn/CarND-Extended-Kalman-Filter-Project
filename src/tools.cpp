@@ -123,10 +123,6 @@ Eigen::VectorXd Tools::ToPolar(const Eigen::VectorXd &carthesian)
 
 Eigen::VectorXd Tools::ToCarthesian(const Eigen::VectorXd &polar)
 {
-  // As the rho_dot does not provide enought information about
-  // true values of vx and vy, it is only possible to convert
-  // the x and y coordinates, but not velocities.
-
   const double rho = polar(0);
   const double phi = polar(1);
   const double x   = rho * cos(phi);
@@ -134,6 +130,22 @@ Eigen::VectorXd Tools::ToCarthesian(const Eigen::VectorXd &polar)
 
   VectorXd carthesian(4);
   carthesian << x, y, 0, 0;
+
+  // Note: the rho_dot at polar(3) is basically a projection of the vehicle's
+  // velocity vector on the direction of the 'rho' vector. That means, there
+  // could be more than one velocity vector (oriented in a different way
+  // and with different lenght) that would make just the same projection.
+  // This ambiguity can not be resolved without an additional information
+  // (say, the current heading angle of the tracked vehicle, which is not
+  // measured by the radar), and so there is no a single way to convert
+  // rho_dot to (vx, vy) vectors.
+
+  // As this function is used at the initialization time, e.g. if the
+  // radar measurement comes first, it is not possible to clearly
+  // dedect the tracked vehicle heading (there is no prior information)
+  // and so the safest solution here from my point of view is just to
+  // initialize vx and vy to 0, later it would be anyway updated with
+  // the next measurements.
 
   return carthesian;
 }
