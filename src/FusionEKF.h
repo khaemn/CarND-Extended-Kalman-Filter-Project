@@ -43,7 +43,7 @@ class FusionEKF {
   Eigen::MatrixXd H_laser_;
   double          noise_ax_;
   double          noise_ay_;
-
+  double          last_dt_ = 0.;
 };
 
 #endif // FusionEKF_H_

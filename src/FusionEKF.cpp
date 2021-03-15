@@ -54,9 +54,8 @@ FusionEKF::~FusionEKF()
 
 void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack)
 {
-  /**
-   * Initialization
-   */
+  // Initialization
+
   if (!is_initialized_)
   {
     // first measurement
@@ -125,12 +124,19 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack)
   const auto dt       = (measurement_pack.timestamp_ - previous_timestamp_) / 1000000.0;
   previous_timestamp_ = measurement_pack.timestamp_;
 
-  // Set proper time gap in the state transition matrix F
-  ekf_.F_(0, 2) = dt;
-  ekf_.F_(1, 3) = dt;
+  static constexpr auto dt_tolerance = 0.0001;
+  if (abs(last_dt_ - dt) > dt_tolerance)
+  {
+    // Performing costly matri operations only if the DT was
+    // changed, otherwise we still can re-use the former ones.
+    // Set proper time gap in the state transition matrix F
+    ekf_.F_(0, 2) = dt;
+    ekf_.F_(1, 3) = dt;
 
-  // Set the process covariance matrix Q
-  ekf_.Q_ = Tools::BuildNoiseMatrix(noise_ax_, noise_ay_, dt);
+    // Set the process covariance matrix Q
+    ekf_.Q_ = Tools::BuildNoiseMatrix(noise_ax_, noise_ay_, dt);
+  }
+  last_dt_ = dt;
 
   ekf_.Predict();
 
