@@ -59,18 +59,16 @@ void KalmanFilter::UpdateEKF(const VectorXd &z)
 {
   VectorXd y = z - Tools::ToPolar(x_);
 
-//  double phi = y(1);
-//  cout << "phi " << phi;
-//  while (phi > M_PI)
-//  {
-//    phi -= 2 * M_PI;
-//  }
-//  while (phi < -M_PI)
-//  {
-//    phi += 2 * M_PI;
-//  }
-//  y(1) = phi;
-//  cout << ", normalized " << phi << endl;
+  double phi = y(1);
+  while (phi > M_PI)
+  {
+    phi -= 2 * M_PI;
+  }
+  while (phi < -M_PI)
+  {
+    phi += 2 * M_PI;
+  }
+  y(1) = phi;
 
   MatrixXd Ht  = H_.transpose();
   MatrixXd S   = (H_ * P_ * Ht) + R_;

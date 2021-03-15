@@ -99,15 +99,8 @@ Eigen::VectorXd Tools::ToPolar(const Eigen::VectorXd &carthesian)
 
   const double rho = sqrt(px * px + py * py);
   double       phi = atan2(py, px);
-  while (phi > M_PI)
-  {
-    phi -= 2 * M_PI;
-  }
-  while (phi < -M_PI)
-  {
-    phi += 2 * M_PI;
-  }
   const double rho_dot = (px * vx + py * vy) / rho;
+
   polar << rho, phi, rho_dot;
   return polar;
 }
