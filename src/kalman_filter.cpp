@@ -1,6 +1,7 @@
 #include "kalman_filter.h"
 
 #include "tools.h"
+
 #include <iostream>
 
 using std::cout;
@@ -43,10 +44,10 @@ void KalmanFilter::Update(const VectorXd &z)
 {
   VectorXd y = z - (H_ * x_);
 
-  MatrixXd Ht  = H_.transpose();
-  MatrixXd S   = (H_ * P_ * Ht) + R_;
-  MatrixXd Si  = S.inverse();
-  MatrixXd K   = P_ * Ht * Si;
+  MatrixXd Ht = H_.transpose();
+  MatrixXd S  = (H_ * P_ * Ht) + R_;
+  MatrixXd Si = S.inverse();
+  MatrixXd K  = P_ * Ht * Si;
 
   // new estimate
   x_              = x_ + (K * y);
@@ -70,10 +71,10 @@ void KalmanFilter::UpdateEKF(const VectorXd &z)
   }
   y(1) = phi;
 
-  MatrixXd Ht  = H_.transpose();
-  MatrixXd S   = (H_ * P_ * Ht) + R_;
-  MatrixXd Si  = S.inverse();
-  MatrixXd K   = P_ * Ht * Si;
+  MatrixXd Ht = H_.transpose();
+  MatrixXd S  = (H_ * P_ * Ht) + R_;
+  MatrixXd Si = S.inverse();
+  MatrixXd K  = P_ * Ht * Si;
 
   // new estimate
   x_              = x_ + (K * y);

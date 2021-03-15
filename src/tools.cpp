@@ -1,4 +1,5 @@
 #include "tools.h"
+
 #include <iostream>
 
 using Eigen::VectorXd;
@@ -8,16 +9,12 @@ using std::vector;
 using std::cout;
 using std::endl;
 
-Tools::Tools() {}
-
-Tools::~Tools() {}
-
 VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations,
                               const vector<VectorXd> &ground_truth)
 {
   if (estimations.empty() or estimations.size() != ground_truth.size())
   {
-    cout << "Error!" << endl;
+    cout << "Error! Empty estimations vector or unmatched ground truth vector size." << endl;
   }
 
   VectorXd rmse(4);
@@ -34,7 +31,7 @@ VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations,
   }
 
   VectorXd mean = residuals / estimations.size();
-  rmse = mean.array().sqrt();
+  rmse          = mean.array().sqrt();
   // return the result
   return rmse;
 }
@@ -80,6 +77,25 @@ MatrixXd Tools::CalculateRadarJacobian(const VectorXd &x_state)
   return Hj;
 }
 
+Eigen::MatrixXd Tools::BuildNoiseMatrix(double noise_ax, double noise_ay, double dt)
+{
+  // Builds the Q matrix using X and Y acceleration noise
+  // and a given delta-t
+
+  const double dt_4_4 = pow(dt, 4.) / 4.;
+  const double dt_3_2 = pow(dt, 3.) / 2.;
+  const double dt_2_1 = pow(dt, 2.) / 1.;
+
+  MatrixXd q = MatrixXd(4, 4);
+  // clang-format off
+    q <<  dt_4_4 * noise_ax, 0., dt_3_2 * noise_ax, 0.,
+          0., dt_4_4 * noise_ay, 0., dt_3_2 * noise_ay,
+          dt_3_2 * noise_ax, 0., dt_2_1 * noise_ax, 0.,
+          0., dt_3_2 * noise_ay, 0., dt_2_1 * noise_ay;
+  // clang-format on
+  return q;
+}
+
 Eigen::VectorXd Tools::ToPolar(const Eigen::VectorXd &carthesian)
 {
   VectorXd polar(3);
@@ -97,8 +113,8 @@ Eigen::VectorXd Tools::ToPolar(const Eigen::VectorXd &carthesian)
   const double vx = carthesian(2);
   const double vy = carthesian(3);
 
-  const double rho = sqrt(px * px + py * py);
-  double       phi = atan2(py, px);
+  const double rho     = sqrt(px * px + py * py);
+  double       phi     = atan2(py, px);
   const double rho_dot = (px * vx + py * vy) / rho;
 
   polar << rho, phi, rho_dot;
@@ -107,6 +123,10 @@ Eigen::VectorXd Tools::ToPolar(const Eigen::VectorXd &carthesian)
 
 Eigen::VectorXd Tools::ToCarthesianXY(const Eigen::VectorXd &polar)
 {
+  // As the rho_dot does not provide enought information about
+  // true values of vx and vy, it is only possible to convert
+  // the x and y coordinates, btu not velocities.
+
   const double rho = polar(0);
   const double phi = polar(1);
   const double x   = rho * cos(phi);
