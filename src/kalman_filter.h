@@ -63,6 +63,12 @@ class KalmanFilter {
 
   // measurement covariance matrix
   Eigen::MatrixXd R_;
+
+private:
+  // Updates the internal state of the filter.
+  // Incorporates all that is in common between
+  // a regular and enhanced updates.
+  void UpdateImpl(const Eigen::VectorXd &y);
 };
 
 #endif // KALMAN_FILTER_H_

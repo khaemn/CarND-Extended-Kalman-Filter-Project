@@ -2,18 +2,8 @@
 
 #include "tools.h"
 
-#include <iostream>
-
-using std::cout;
-using std::endl;
-
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
-
-/*
- * Please note that the Eigen library does not initialize
- *   VectorXd or MatrixXd objects with zeros upon creation.
- */
 
 KalmanFilter::KalmanFilter()
 {}
@@ -44,33 +34,21 @@ void KalmanFilter::Update(const VectorXd &z)
 {
   VectorXd y = z - (H_ * x_);
 
-  MatrixXd Ht = H_.transpose();
-  MatrixXd S  = (H_ * P_ * Ht) + R_;
-  MatrixXd Si = S.inverse();
-  MatrixXd K  = P_ * Ht * Si;
-
-  // new estimate
-  x_              = x_ + (K * y);
-  long     x_size = x_.size();
-  MatrixXd I      = MatrixXd::Identity(x_size, x_size);
-  P_              = (I - K * H_) * P_;
+  UpdateImpl(y);
 }
 
 void KalmanFilter::UpdateEKF(const VectorXd &z)
 {
   VectorXd y = z - Tools::ToPolar(x_);
 
-  double phi = y(1);
-  while (phi > M_PI)
-  {
-    phi -= 2 * M_PI;
-  }
-  while (phi < -M_PI)
-  {
-    phi += 2 * M_PI;
-  }
-  y(1) = phi;
+  // Normalize y(1) (e.g. phi) to [-pi .. pi] range
+  y(1) = atan2(sin(y(1)), cos(y(1)));
 
+  UpdateImpl(y);
+}
+
+void KalmanFilter::UpdateImpl(const Eigen::VectorXd &y)
+{
   MatrixXd Ht = H_.transpose();
   MatrixXd S  = (H_ * P_ * Ht) + R_;
   MatrixXd Si = S.inverse();
